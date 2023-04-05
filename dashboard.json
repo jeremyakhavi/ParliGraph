@@ -1,0 +1,344 @@
+{
+  "title": "",
+  "version": "2.2",
+  "settings": {
+    "pagenumber": 0,
+    "editable": true,
+    "fullscreenEnabled": false,
+    "parameters": {
+      "neodash_mp_name": "Tulip Siddiq",
+      "neodash_mp_name_display": "Tulip Siddiq",
+      "neodash_region_name": "West Midlands",
+      "neodash_region_name_display": "West Midlands",
+      "neodash_mp_name_5": "",
+      "neodash_mp_name_5_display": "",
+      "neodash_mp_name_1": "Tulip Siddiq",
+      "neodash_mp_name_1_display": "Tulip Siddiq",
+      "neodash_party_name_1": "Labour",
+      "neodash_party_name_1_display": "Labour",
+      "neodash_party_name_2": "Labour",
+      "neodash_party_name_2_display": "Labour"
+    },
+    "downloadImageEnabled": true
+  },
+  "pages": [
+    {
+      "title": "Main Page",
+      "reports": [
+        {
+          "title": "Hi there 👋",
+          "query": "**This is your first dashboard!** \n \nYou can click (⋮) to edit this report, or add a new report to get started. You can run any Cypher query directly from each report and render data in a variety of formats. \n \nTip: try _renaming_ this report by editing the title text. You can also edit the dashboard header at the top of the screen.\n\n\n",
+          "width": 3,
+          "height": 2,
+          "x": 0,
+          "y": 0,
+          "type": "text",
+          "selection": {},
+          "settings": {}
+        },
+        {
+          "title": "Total No. Of MPs",
+          "query": "MATCH (mp:MP) RETURN count(mp) AS total_mps",
+          "width": 3,
+          "height": 2,
+          "x": 3,
+          "y": 0,
+          "type": "value",
+          "selection": {},
+          "settings": {
+            "nodePositions": {}
+          }
+        },
+        {
+          "title": "Number of MPs in each party",
+          "query": "\nMATCH (party:Party)<-[:IS_A_MEMBER_OF]-(mp:MP)\nRETURN party.name AS Party, COUNT(mp) AS Number_of_MPs\nORDER BY Number_of_MPs ASC\n\n",
+          "width": 6,
+          "height": 2,
+          "x": 6,
+          "y": 0,
+          "type": "bar",
+          "selection": {
+            "index": "Party",
+            "value": "Number_of_MPs",
+            "key": "(none)"
+          },
+          "settings": {
+            "legend": false,
+            "groupMode": "stacked",
+            "layout": "horizontal",
+            "fullscreenEnabled": true,
+            "barValues": false,
+            "marginLeft": 200,
+            "colors": "paired",
+            "valueScale": "linear",
+            "styleRules": [
+              {
+                "field": "Party",
+                "condition": "=",
+                "value": "Conservative",
+                "customization": "bar color",
+                "customizationValue": "#0087dc"
+              },
+              {
+                "field": "Party",
+                "condition": "=",
+                "value": "Labour",
+                "customization": "bar color",
+                "customizationValue": "#dc241f"
+              },
+              {
+                "field": "Party",
+                "condition": "=",
+                "value": "Liberal Democrat",
+                "customization": "bar color",
+                "customizationValue": "#fdbb30"
+              },
+              {
+                "field": "Party",
+                "condition": "=",
+                "value": "Scottish National Party",
+                "customization": "bar color",
+                "customizationValue": "#e4e411"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Number of MPs per region",
+          "query": "\nMATCH (r:Region)<-[:REPRESENTS_REGION]-(mp:MP)\nRETURN r.name AS Region, COUNT(mp) AS Number_of_MPs\n\n",
+          "width": 5,
+          "height": 2,
+          "x": 0,
+          "y": 2,
+          "type": "pie",
+          "selection": {
+            "index": "Region",
+            "value": "Number_of_MPs",
+            "key": "(none)"
+          },
+          "settings": {
+            "sortByValue": false,
+            "enableArcLabels": true,
+            "marginTop": 50
+          }
+        },
+        {
+          "title": "Selected MP metadata",
+          "query": "MATCH (mp:MP {name: $neodash_mp_name_1})-[r]->(x)\nWHERE NOT type(r) IN ['VOTED_FOR', 'VOTED_AGAINST']\nRETURN mp, r, x\n\n",
+          "width": 4,
+          "height": 2,
+          "x": 8,
+          "y": 2,
+          "type": "graph",
+          "selection": {
+            "MP": "name",
+            "Party": "name",
+            "Region": "name",
+            "Organization": "name",
+            "Person": "name"
+          },
+          "settings": {
+            "nodePositions": {},
+            "fullscreenEnabled": true,
+            "layout": "radial"
+          }
+        },
+        {
+          "title": "Select an MP to view their metadata",
+          "query": "MATCH (n:`MP`) \nWHERE toLower(toString(n.`name`)) CONTAINS toLower($input) \nRETURN DISTINCT n.`name` as value,  n.`name` as display ORDER BY size(toString(value)) ASC LIMIT 5",
+          "width": 3,
+          "height": 2,
+          "x": 5,
+          "y": 2,
+          "type": "select",
+          "selection": {},
+          "settings": {
+            "nodePositions": {},
+            "type": "Node Property",
+            "entityType": "MP",
+            "propertyType": "name",
+            "propertyTypeDisplay": "name",
+            "parameterName": "neodash_mp_name_1",
+            "id": "1"
+          }
+        },
+        {
+          "title": "Top 5 policies with highest number of votes in favour",
+          "query": "MATCH (p:Policy)<-[:VOTED_FOR]-(mp:MP)\nRETURN p.name AS Policy, COUNT(mp) AS Votes_For\nORDER BY Votes_For DESC\nLIMIT 5\n\n\n",
+          "width": 6,
+          "height": 2,
+          "x": 0,
+          "y": 4,
+          "type": "table",
+          "selection": {},
+          "settings": {
+            "nodePositions": {},
+            "columnWidths": "[3,1]",
+            "compact": false
+          }
+        },
+        {
+          "title": "Top 5 policies with highest number of votes against",
+          "query": "MATCH (p:Policy)<-[:VOTED_AGAINST]-(mp:MP)\nRETURN p.name AS Policy, COUNT(mp) AS Votes_Against\nORDER BY Votes_Against DESC\nLIMIT 5\n\n\n",
+          "width": 6,
+          "height": 2,
+          "x": 6,
+          "y": 4,
+          "type": "table",
+          "selection": {},
+          "settings": {
+            "nodePositions": {},
+            "columnWidths": "[3,1]"
+          }
+        },
+        {
+          "title": "Schools with the most MP alumni",
+          "query": "MATCH (mp:MP)-[:schools_attended]->(org:Organization) RETURN org.name AS School, count(mp) AS Num_Alumni ORDER BY Num_Alumni DESC LIMIT 5\n",
+          "width": 3,
+          "height": 2,
+          "x": 0,
+          "y": 6,
+          "type": "table",
+          "selection": {},
+          "settings": {
+            "nodePositions": {},
+            "fullscreenEnabled": true
+          }
+        },
+        {
+          "title": "Select a region to view regional MPs",
+          "query": "MATCH (n:`Region`) \nWHERE toLower(toString(n.`name`)) CONTAINS toLower($input) \nRETURN DISTINCT n.`name` as value,  n.`name` as display ORDER BY size(toString(value)) ASC LIMIT 5",
+          "width": 3,
+          "height": 2,
+          "x": 3,
+          "y": 6,
+          "type": "select",
+          "selection": {},
+          "settings": {
+            "nodePositions": {},
+            "type": "Node Property",
+            "entityType": "Region",
+            "propertyType": "name",
+            "propertyTypeDisplay": "name",
+            "parameterName": "neodash_region_name"
+          }
+        },
+        {
+          "title": "Selected region MPs",
+          "query": "MATCH (mp:MP)-[:REPRESENTS_REGION]->(region:Region {name: $neodash_region_name}), (mp)-[:IS_A_MEMBER_OF]->(party:Party)\nRETURN mp.name AS MP, mp.constituency AS constituency,  party.name AS Party",
+          "width": 6,
+          "height": 2,
+          "x": 6,
+          "y": 6,
+          "type": "table",
+          "selection": {},
+          "settings": {
+            "nodePositions": {},
+            "type": "Node Property",
+            "entityType": "Region",
+            "compact": true
+          }
+        },
+        {
+          "title": "Policies with highest support-opposition ratio",
+          "query": "MATCH (mp:MP)-[vf:VOTED_FOR]->(p:Policy)\nWITH p, COUNT(vf) AS support\nMATCH (mp:MP)-[va:VOTED_AGAINST]->(p)\nWITH p, support, COUNT(va) AS opposition\nWHERE opposition <> 0\nRETURN p.name AS policy, support, opposition, toFloat(support) / opposition AS support_ratio\nORDER BY support_ratio DESC\nLIMIT 5\n\n\n",
+          "width": 6,
+          "height": 2,
+          "x": 0,
+          "y": 8,
+          "type": "table",
+          "selection": {},
+          "settings": {
+            "nodePositions": {},
+            "columnWidths": "[3,1,1,1]"
+          }
+        },
+        {
+          "title": "Most controversial policies",
+          "query": "MATCH (mp:MP)-[vf:VOTED_FOR]->(p:Policy)\nWITH p, COUNT(vf) AS support\nMATCH (mp:MP)-[va:VOTED_AGAINST]->(p)\nWITH p, support, COUNT(va) AS opposition\nWHERE support > 0 AND opposition > 0\nRETURN p.name AS policy, support, opposition, ABS(toFloat(support) - opposition) / (support + opposition) AS controversy_ratio\nORDER BY controversy_ratio ASC\nLIMIT 5",
+          "width": 6,
+          "height": 2,
+          "x": 6,
+          "y": 8,
+          "type": "table",
+          "selection": {},
+          "settings": {
+            "nodePositions": {},
+            "columnWidths": "[3,1,1,1]"
+          }
+        },
+        {
+          "title": "Select party to see top voted for policies",
+          "query": "MATCH (n:`Party`) \nWHERE toLower(toString(n.`name`)) CONTAINS toLower($input) \nRETURN DISTINCT n.`name` as value,  n.`name` as display ORDER BY size(toString(value)) ASC LIMIT 5",
+          "width": 3,
+          "height": 2,
+          "x": 0,
+          "y": 10,
+          "type": "select",
+          "selection": {},
+          "settings": {
+            "nodePositions": {},
+            "type": "Node Property",
+            "entityType": "Party",
+            "propertyType": "name",
+            "propertyTypeDisplay": "name",
+            "parameterName": "neodash_party_name_1"
+          }
+        },
+        {
+          "title": "Top voted for policies for selected party",
+          "query": "MATCH (party:Party {name: $neodash_party_name_1})\nMATCH (mp:MP)-[:IS_A_MEMBER_OF]->(party)\nMATCH (mp)-[:VOTED_FOR]->(p:Policy)\nWITH p, COUNT(mp) AS party_votes\nMATCH (mp:MP)-[:VOTED_FOR]->(p)\nWITH p, party_votes, COUNT(mp) AS total_votes\nWHERE total_votes > 0\nRETURN p.name AS party, party_votes, total_votes, toFloat(party_votes) / total_votes * 100 AS party_vote_percentage\nORDER BY party_vote_percentage DESC\nLIMIT 100\n\n\n",
+          "width": 9,
+          "height": 2,
+          "x": 3,
+          "y": 10,
+          "type": "table",
+          "selection": {},
+          "settings": {
+            "nodePositions": {},
+            "columnWidths": "[3,1,1,1]"
+          }
+        },
+        {
+          "title": "Select party to see top voted against policies",
+          "query": "MATCH (n:`Party`) \nWHERE toLower(toString(n.`name`)) CONTAINS toLower($input) \nRETURN DISTINCT n.`name` as value,  n.`name` as display ORDER BY size(toString(value)) ASC LIMIT 5",
+          "width": 3,
+          "height": 2,
+          "x": 0,
+          "y": 12,
+          "type": "select",
+          "selection": {},
+          "settings": {
+            "nodePositions": {},
+            "type": "Node Property",
+            "entityType": "Party",
+            "propertyType": "name",
+            "propertyTypeDisplay": "name",
+            "parameterName": "neodash_party_name_2",
+            "id": "2"
+          }
+        },
+        {
+          "title": "Top votes against policies for selected party",
+          "query": "MATCH (party:Party {name: $neodash_party_name_2})\nMATCH (mp:MP)-[:IS_A_MEMBER_OF]->(party)\nMATCH (mp)-[:VOTED_AGAINST]->(p:Policy)\nWITH p, COUNT(mp) AS party_votes\nMATCH (mp:MP)-[:VOTED_AGAINST|VOTED_FOR]->(p)\nWITH p, party_votes, COUNT(mp) AS total_votes\nWHERE total_votes > 0\nRETURN p.name AS party, party_votes, total_votes, toFloat(party_votes) / total_votes * 100 AS party_vote_percentage\nORDER BY party_vote_percentage DESC\nLIMIT 100",
+          "width": 9,
+          "height": 2,
+          "x": 3,
+          "y": 12,
+          "type": "table",
+          "selection": {},
+          "settings": {
+            "nodePositions": {},
+            "columnWidths": "[3,1,1,1]"
+          }
+        }
+      ]
+    }
+  ],
+  "parameters": {},
+  "extensions": {
+    "advanced-charts": true,
+    "styling": true,
+    "actions": true
+  }
+}
