@@ -1,4 +1,7 @@
 import requests
+from logger_config import get_logger
+
+logger = get_logger(__name__)
 
 class MP:
     def __init__(self, id, party, constituency, gender, start_date):
@@ -30,19 +33,38 @@ class MP:
         
         data = response.json()
 
-        self.electorate = data['value']['electorate']
-        self.turnout = data['value']['turnout']
-        self.majority = data['value']['majority']
+        if 'value' in data:
+            self.electorate = data['value'].get('electorate')
+            self.turnout = data['value'].get('turnout')
+            self.majority = data['value'].get('majority')
+        else:
+            logger.error('Election result data is missing or invalid.')
 
     def set_twfy_id_name(self, twfy_dict):
-        self.name = twfy_dict[self.constituency]['name']
-        self.twfy_id = twfy_dict[self.constituency]['twfy_id']
+        if 'name' in twfy_dict and 'twfy_id' in twfy_dict:
+            self.name = twfy_dict['name']
+            self.twfy_id = twfy_dict['twfy_id']
+        else:
+            err_msg = f"TheyWorkForYou dictionary is missing required keys 'name' and/or 'twfy_id' for MP id: {self.id}"
+            logger.critical(err_msg)
+            raise ValueError(err_msg)
 
-    def set_region(self, constituency_region_dict):
-        self.region = constituency_region_dict[self.constituency]
+    def set_region(self, region):
+        if region:
+            self.region = region
+        else:
+            logger.error(f"Region value is missing or invalid for MP id: {self.id}.")
 
     def set_govt_post(self, govt_post):
-        self.govt_post = govt_post
+        if govt_post:
+            self.govt_post = govt_post
+        else:
+            logger.error(f"Government post value is missing or invalid for MP id: {self.id}.")
 
     def set_votes(self, votes):
-        self.votes = votes
+        if votes and isinstance(votes, list):
+            self.votes = votes
+        else:
+            err_msg = f"Votes data is missing or invalid for MP id: {self.id}."
+            logger.critical(err_msg)
+            raise ValueError(err_msg)
