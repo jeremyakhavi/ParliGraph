@@ -1,8 +1,11 @@
 from unittest.mock import patch
 import sys
 import os
-parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.abspath(os.path.join(current_dir, os.pardir))
+grandparent_dir = os.path.abspath(os.path.join(parent_dir, os.pardir))
 sys.path.append(parent_dir)
+sys.path.append(grandparent_dir)
 from database import Database
 
 import pytest

@@ -1,15 +1,17 @@
 import pytest
-import requests
 from unittest.mock import MagicMock, patch
 import sys
 import os
-parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.abspath(os.path.join(current_dir, os.pardir))
+grandparent_dir = os.path.abspath(os.path.join(parent_dir, os.pardir))
 sys.path.append(parent_dir)
-from person import MP
+sys.path.append(grandparent_dir)
+from person import MP, get_mps_from_members_api
 
 @pytest.fixture
 def mp_instance():
-    yield MP(1, 'Party', 'Constituency', 'M', '2022-01-01')
+    yield MP(1, 'MP 1', 'Party', 'Constituency', 'M', '2022-01-01')
 
 def test_MP_init(mp_instance):
     assert mp_instance.id == 1
@@ -94,3 +96,50 @@ def test_set_votes_empty_list(mp_instance):
 def test_set_votes_not_list(mp_instance):
     with pytest.raises(ValueError):
         mp_instance.set_votes('not a list')
+
+# Test data for mocking API responses
+members_api_response = {
+    "totalResults": 1,
+    "items": [
+        {
+            "value": {
+                "id": "1234",
+                "nameDisplayAs": "MP 1",
+                "latestParty": {"name": "Labour (Co-op)"},
+                "latestHouseMembership": {
+                    "membershipFrom": "Test Constituency",
+                    "membershipStartDate": "2023-01-01T00:00:00"
+                },
+                "gender": "M"
+            }
+        }
+    ]
+}
+
+def test_get_mps_from_members_api():
+    with patch("requests.get") as mock_get:
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.json.return_value = members_api_response
+
+        # Test the get_mps_from_members_api function
+        result = get_mps_from_members_api()
+        expected_result = {
+            "Test Constituency": MP(id="1234", name="MP 1", party="Labour", constituency="Test Constituency", gender="M", start_date="2023-01-01")
+        }
+        for res, expected_res in zip(result.values(), expected_result.values()):
+            assert res.id == expected_res.id
+            assert res.party == expected_res.party
+            assert res.constituency == expected_res.constituency
+            assert res.gender == expected_res.gender
+            assert res.start_date == expected_res.start_date
+
+def test_get_mps_from_members_api_invalid_status_code():
+    # Use 'with' for the requests.get mock
+    with patch("requests.get") as mock_get, patch("time.sleep") as mock_sleep:
+        mock_get.return_value.status_code = 500
+        mock_get.return_value.json.return_value = {}
+
+        # Test the get_mps_from_members_api function with an invalid status code
+        with pytest.raises(RecursionError):
+            get_mps_from_members_api()
+            mock_sleep.assert_called_once_with(5)
