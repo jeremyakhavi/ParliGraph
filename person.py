@@ -5,8 +5,9 @@ from logger_config import get_logger
 logger = get_logger(__name__)
 
 class MP:
-    def __init__(self, id, party, constituency, gender, start_date):
+    def __init__(self, id, name, party, constituency, gender, start_date):
         self.id = id
+        self.name = name
         self.twfy_id = None
         self.party = party
         self.constituency = constituency.lower()
@@ -14,7 +15,6 @@ class MP:
         self.votes = []
         self.gender = gender
         self.start_date = start_date
-        self.name = None
         self.electorate = None
         self.turnout = None
         self.majority = None
@@ -72,43 +72,41 @@ class MP:
         
 def get_mps_from_members_api():
     logger.info("Getting list of MPs from members API")
-    # Set up the API endpoint and request parameters
     url = 'https://members-api.parliament.uk/api/Members/Search'
     params = {'take': 20, 'skip': 0, 'IsCurrentMember': True, 'House': 1}
 
     mp_dict = {}
+    max_retries = 30
+    retry_count = 0
 
-    # Loop through each page of results until we've retrieved all MPs
     while True:
-        # Make the API request with the current pagination parameters
         response = requests.get(url, params=params)
-        # If response isn't valid, wait 5 seconds before trying again
+        
         if response.status_code != 200:
             logger.debug(f'Get Members API request failed with code: {response.status_code}, {response.json()}')
+            retry_count += 1
+            if retry_count >= max_retries:
+                logger.critical("Max retries reached. Exiting.")
+                raise(RecursionError)
             time.sleep(5)
             continue
-        # Parse the response data as JSON
-        data = response.json()
 
-        # Extract the MPs from the response and add them to our list
-        for mp in data['items']:       
+        data = response.json()
+        for mp in data['items']:
             party = mp['value']['latestParty']['name']
-            # Labour (Co-op) MPs are generally regarded as Labour Party MPs
             if party == 'Labour (Co-op)':
                 party = 'Labour'
             
-            mp_obj = MP(id=mp['value']['id'], party=party, 
+            mp_obj = MP(id=mp['value']['id'], name= mp['value']['nameDisplayAs'], party=party, 
                         constituency=mp['value']['latestHouseMembership']['membershipFrom'],
                         gender=mp['value']['gender'],
                         start_date=mp['value']['latestHouseMembership']['membershipStartDate'].split("T")[0])
-            # add to mp dictionary, with key as constituency (as constituency is unique for each MP)
             mp_dict[mp_obj.constituency] = mp_obj
 
-        # Check if we've retrieved all MPs
         if len(mp_dict) == data['totalResults']:
             break
-        # Update the pagination parameters for the next API request
+
         params['skip'] += params['take']
         logger.debug(f"Members API Search params: {params}")
-    
+
     return mp_dict
