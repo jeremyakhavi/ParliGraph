@@ -56,15 +56,17 @@ class Database(object):
     
 def create_person_work(tx, name, party, constituency, region, gender,
                     start_date, electorate, turnout, majority, govt_post):
-    return tx.run("MERGE (m:MP {name: $name}) ON CREATE SET m.constituency = $constituency,\
-                                                            m.gender = $gender, m.start_date = $start_date,\
-                                                            m.electorate = $electorate, m.turnout = $turnout,\
-                                                            m.majority = $majority, m.govt_post = $govt_post \
+    return tx.run("MERGE (m:MP {name: $name}) SET m.constituency = $constituency,\
+                                                           m.gender = $gender,\
+                                                           m.electorate = $electorate, m.turnout = $turnout,\
+                                                           m.majority = $majority, m.govt_post = $govt_post \
                 MERGE (p:Party {name: $party}) \
                 MERGE (r:Region {name: $region}) \
+                MERGE (s:Start_Date {date: $start_date}) \
                 MERGE (m)-[:IS_A_MEMBER_OF]->(p) \
                 MERGE (m)-[:REPRESENTS_REGION]->(r) \
-                RETURN m, p, r",
+                MERGE (m)-[:JOINED_HOUSE]->(s)  \
+                RETURN m, p, r, s",
                 name=name, party=party, constituency=constituency, region=region, 
                 gender=gender, start_date=start_date, electorate=electorate, 
                 turnout=turnout, majority=majority, govt_post=govt_post).single()
